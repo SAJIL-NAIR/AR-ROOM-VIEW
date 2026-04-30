@@ -1,58 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>VR Room View</title>
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-  </style>
-</head>
-
-<body>
-
-<a-scene background="color: #222">
-
-  <a-assets timeout="120000">
-    <a-asset-item id="room" src="./room.glb"></a-asset-item>
-  </a-assets>
-
-  <a-entity
-    id="roomModel"
-    gltf-model="#room"
-    position="0 0 0"
-    scale="1 1 1">
-  </a-entity>
-
-  <a-entity light="type: ambient; intensity: 1.8"></a-entity>
-  <a-entity light="type: directional; intensity: 1" position="2 4 3"></a-entity>
-
-  <a-entity id="cameraRig" position="0 1.6 -2">
-    <a-entity
-      id="camera"
-      camera
-      look-controls
-      position="0 0 0">
-    </a-entity>
-  </a-entity>
-
-</a-scene>
-
-<!-- Joystick -->
-<div id="joystick" style="
-  position: fixed;
-  bottom: 30px;
-  left: 30px;
-  width: 120px;
-  height: 120px;
-  z-index: 10;">
-</div>
-
 <script>
   const rig = document.querySelector("#cameraRig");
   const camera = document.querySelector("#camera");
@@ -101,6 +46,7 @@
 
   function moveForward() {
     const direction = getForwardDirection();
+
     if (canMove(direction)) {
       rig.object3D.position.x += direction.x * moveSpeed;
       rig.object3D.position.z += direction.z * moveSpeed;
@@ -109,6 +55,7 @@
 
   function moveBackward() {
     const direction = getForwardDirection().negate();
+
     if (canMove(direction)) {
       rig.object3D.position.x += direction.x * moveSpeed;
       rig.object3D.position.z += direction.z * moveSpeed;
@@ -135,38 +82,43 @@
   updateMovement();
 
   const joystick = nipplejs.create({
-    zone: document.getElementById('joystick'),
-    mode: 'static',
-    position: { left: '60px', bottom: '60px' },
-    color: 'white'
+    zone: document.getElementById("joystick"),
+    mode: "static",
+    position: { left: "60px", top: "60px" },
+    color: "white",
+    size: 120
   });
 
-  joystick.on('move', function (evt, data) {
-    const angle = data.angle.degree;
+  joystick.on("move", function (evt, data) {
+    if (!data || !data.vector) return;
 
     moveForwardFlag = false;
     moveBackwardFlag = false;
     rotateLeftFlag = false;
     rotateRightFlag = false;
 
-    if (angle >= 45 && angle < 135) {
-      moveBackwardFlag = true;
-    } else if (angle >= 225 && angle < 315) {
-      moveForwardFlag = true;
-    } else if (angle >= 135 && angle < 225) {
-      rotateLeftFlag = true;
+    const x = data.vector.x;
+    const y = data.vector.y;
+
+    if (Math.abs(y) > Math.abs(x)) {
+      if (y > 0) {
+        moveForwardFlag = true;
+      } else {
+        moveBackwardFlag = true;
+      }
     } else {
-      rotateRightFlag = true;
+      if (x < 0) {
+        rotateLeftFlag = true;
+      } else {
+        rotateRightFlag = true;
+      }
     }
   });
 
-  joystick.on('end', function () {
+  joystick.on("end", function () {
     moveForwardFlag = false;
     moveBackwardFlag = false;
     rotateLeftFlag = false;
     rotateRightFlag = false;
   });
 </script>
-
-</body>
-</html>
