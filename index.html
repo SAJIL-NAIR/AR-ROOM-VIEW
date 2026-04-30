@@ -67,9 +67,9 @@
 </a-scene>
 
 <div class="controls">
-  <button class="btn up" id="backBtn">▲</button>
+  <button class="btn up" id="forwardBtn">▲</button>
   <button class="btn left" id="leftBtn">◀</button>
-  <button class="btn down" id="forwardBtn">▼</button>
+  <button class="btn down" id="backBtn">▼</button>
   <button class="btn right" id="rightBtn">▶</button>
 </div>
 
@@ -107,12 +107,9 @@
 
   function getForwardDirection() {
     const direction = new THREE.Vector3();
-
     camera.object3D.getWorldDirection(direction);
-
     direction.y = 0;
     direction.normalize();
-
     return direction;
   }
 
@@ -129,7 +126,6 @@
 
   function moveForward() {
     const direction = getForwardDirection();
-
     if (canMove(direction)) {
       rig.object3D.position.x += direction.x * moveSpeed;
       rig.object3D.position.z += direction.z * moveSpeed;
@@ -138,7 +134,6 @@
 
   function moveBackward() {
     const direction = getForwardDirection().negate();
-
     if (canMove(direction)) {
       rig.object3D.position.x += direction.x * moveSpeed;
       rig.object3D.position.z += direction.z * moveSpeed;
@@ -154,8 +149,10 @@
   }
 
   function updateMovement() {
+    // 🔁 swapped controls
     if (keys["s"] || moveForwardFlag) moveForward();
     if (keys["w"] || moveBackwardFlag) moveBackward();
+
     if (keys["a"] || rotateLeftFlag) rotateLeft();
     if (keys["d"] || rotateRightFlag) rotateRight();
 
@@ -182,6 +179,7 @@
     btn.addEventListener("mouseleave", stopFn);
   }
 
+  // mobile matches swapped keys
   holdButton("forwardBtn",
     () => moveForwardFlag = true,
     () => moveForwardFlag = false
