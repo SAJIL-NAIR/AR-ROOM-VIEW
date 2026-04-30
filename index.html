@@ -1,18 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VR Room View</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 25px;
+      left: 25px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px;
+      gap: 8px;
+    }
+
+    .btn {
+      font-size: 28px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.75);
+      color: #000;
+    }
+
+    .up { grid-column: 2; }
+    .left { grid-column: 1; grid-row: 2; }
+    .down { grid-column: 2; grid-row: 2; }
+    .right { grid-column: 3; grid-row: 2; }
+  </style>
+</head>
+
+<body>
+
+<a-scene background="color: #222">
+
+  <a-assets timeout="120000">
+    <a-asset-item id="room" src="./room.glb"></a-asset-item>
+  </a-assets>
+
+  <!-- New Room Model -->
+  <a-entity
+    id="roomModel"
+    gltf-model="#room"
+    position="0 0 0"
+    scale="1 1 1">
+  </a-entity>
+
+  <a-entity light="type: ambient; intensity: 1.8"></a-entity>
+  <a-entity light="type: directional; intensity: 1" position="2 4 3"></a-entity>
+
+  <!-- Camera -->
+  <a-entity id="cameraRig" position="0 1.6 -2">
+    <a-entity
+      id="camera"
+      camera
+      look-controls
+      position="0 0 0">
+    </a-entity>
+  </a-entity>
+
+</a-scene>
+
+<!-- Mobile Controls -->
+<div class="controls">
+  <button class="btn up" onclick="moveForward()">▲</button>
+  <button class="btn left" onclick="rotateLeft()">◀</button>
+  <button class="btn down" onclick="moveBackward()">▼</button>
+  <button class="btn right" onclick="rotateRight()">▶</button>
+</div>
+
 <script>
   const rig = document.querySelector("#cameraRig");
   const camera = document.querySelector("#camera");
   const roomModel = document.querySelector("#roomModel");
 
-  const moveSpeed = 0.03;
+  const moveSpeed = 0.1;
   const rotateSpeed = 0.015;
 
   const keys = {};
   let collidableObjects = [];
-
-  let moveForwardFlag = false;
-  let moveBackwardFlag = false;
-  let rotateLeftFlag = false;
-  let rotateRightFlag = false;
 
   roomModel.addEventListener("model-loaded", function () {
     roomModel.object3D.traverse(function (child) {
@@ -20,10 +93,17 @@
         collidableObjects.push(child);
       }
     });
+
+    console.log("Collision objects loaded:", collidableObjects.length);
   });
 
-  document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-  document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+  document.addEventListener("keydown", function(e) {
+    keys[e.key.toLowerCase()] = true;
+  });
+
+  document.addEventListener("keyup", function(e) {
+    keys[e.key.toLowerCase()] = false;
+  });
 
   function getForwardDirection() {
     const direction = new THREE.Vector3();
@@ -36,6 +116,7 @@
   function canMove(direction) {
     const origin = new THREE.Vector3();
     rig.object3D.getWorldPosition(origin);
+
     origin.y = 1.0;
 
     const raycaster = new THREE.Raycaster(origin, direction, 0, 0.6);
@@ -71,54 +152,16 @@
   }
 
   function updateMovement() {
-    if (keys["w"] || moveForwardFlag) moveForward();
-    if (keys["s"] || moveBackwardFlag) moveBackward();
-    if (keys["a"] || rotateLeftFlag) rotateLeft();
-    if (keys["d"] || rotateRightFlag) rotateRight();
+    if (keys["s"]) moveForward();
+    if (keys["w"]) moveBackward();
+    if (keys["a"]) rotateLeft();
+    if (keys["d"]) rotateRight();
 
     requestAnimationFrame(updateMovement);
   }
 
   updateMovement();
-
-  const joystick = nipplejs.create({
-    zone: document.getElementById("joystick"),
-    mode: "static",
-    position: { left: "60px", top: "60px" },
-    color: "white",
-    size: 120
-  });
-
-  joystick.on("move", function (evt, data) {
-    if (!data || !data.vector) return;
-
-    moveForwardFlag = false;
-    moveBackwardFlag = false;
-    rotateLeftFlag = false;
-    rotateRightFlag = false;
-
-    const x = data.vector.x;
-    const y = data.vector.y;
-
-    if (Math.abs(y) > Math.abs(x)) {
-      if (y > 0) {
-        moveForwardFlag = true;
-      } else {
-        moveBackwardFlag = true;
-      }
-    } else {
-      if (x < 0) {
-        rotateLeftFlag = true;
-      } else {
-        rotateRightFlag = true;
-      }
-    }
-  });
-
-  joystick.on("end", function () {
-    moveForwardFlag = false;
-    moveBackwardFlag = false;
-    rotateLeftFlag = false;
-    rotateRightFlag = false;
-  });
 </script>
+
+</body>
+</html>
